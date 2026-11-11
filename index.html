@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f1115">
+<title>Son interne</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #181b22;
+    --line: #272b35;
+    --text: #e8eaf0;
+    --muted: #8b91a1;
+    --accent: #4f8cff;
+    --danger: #ff4d5e;
+    --ok: #34d399;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-size: 20px; margin: 4px 0 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+  }
+  .muted { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
+  .warn { border-color: #6b4e16; background: #241d0d; color: #f5d58a; }
+  .timer {
+    font-size: 44px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    font-weight: 300;
+  }
+  .meter {
+    height: 12px;
+    background: var(--bg);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .meter > div {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--ok), #facc15, var(--danger));
+    transition: width .08s linear;
+  }
+  .status { text-align: center; font-size: 13px; color: var(--muted); min-height: 18px; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--danger); }
+  button {
+    width: 100%;
+    padding: 16px;
+    border: 0;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+  }
+  button.stop { background: var(--danger); }
+  button:disabled { opacity: .4; }
+  .result { display: grid; gap: 8px; }
+  .result .meta { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+  .result .name { font-size: 13px; word-break: break-all; }
+  audio { width: 100%; }
+  ol { margin: 0; padding-left: 18px; }
+  ol li { font-size: 13px; color: var(--muted); line-height: 1.6; }
+</style>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./icon.png">
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="./splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="./splash-1242x2208.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="./splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="./splash-640x1136.png">
+</head>
+<body>
+<main>
+  <h1>🎧 Son interne</h1>
+
+  <div id="avertissement" class="card warn" hidden>
+    <strong>Plugin SystemAudio introuvable.</strong>
+    <p class="muted" style="color:inherit">
+      Cette page doit tourner dans l'APK compilé avec APKor (Android 10 minimum).
+      Dans un navigateur, la capture du son interne n'est pas disponible.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="timer" id="timer">00:00</div>
+    <div class="meter"><div id="niveau"></div></div>
+    <div class="status" id="statut">Prêt.</div>
+    <button id="btnStart">Démarrer l'enregistrement</button>
+    <button id="btnStop" class="stop" hidden>Arrêter et sauvegarder</button>
+  </div>
+
+  <div class="card">
+    <strong style="font-size:14px">Mode d'emploi</strong>
+    <ol>
+      <li>Appuie sur « Démarrer » et accepte la capture.</li>
+      <li>Ouvre Brave et lance ta vidéo YouTube.</li>
+      <li>Reviens ici et appuie sur « Arrêter ».</li>
+    </ol>
+    <p class="muted">
+      L'enregistrement continue en arrière-plan. Le fichier WAV (48 kHz, stéréo, sans perte)
+      est sauvegardé dans Musique/APKor.
+    </p>
+  </div>
+
+  <div id="resultats" style="display:grid; gap:14px"></div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Éléments ----------
+  const $ = (id) => document.getElementById(id);
+  const btnStart = $("btnStart");
+  const btnStop = $("btnStop");
+  const elTimer = $("timer");
+  const elNiveau = $("niveau");
+  const elStatut = $("statut");
+  const elResultats = $("resultats");
+
+  // ---------- Plugin natif (injecté par APKor) ----------
+  const cap = window.Capacitor;
+  const SystemAudio = cap && cap.Plugins ? cap.Plugins.SystemAudio : null;
+
+  if (!SystemAudio) {
+    $("avertissement").hidden = false;
+    btnStart.disabled = true;
+  }
+
+  let pollId = null;
+  let compteur = 0;
+
+  // ---------- Utilitaires ----------
+  function statut(msg, type = "") {
+    elStatut.textContent = msg;
+    elStatut.className = "status " + type;
+  }
+
+  function formatDuree(ms) {
+    const s = Math.floor(ms / 1000);
+    const m = String(Math.floor(s / 60)).padStart(2, "0");
+    const r = String(s % 60).padStart(2, "0");
+    return `${m}:${r}`;
+  }
+
+  function formatTaille(octets) {
+    if (octets > 1048576) return (octets / 1048576).toFixed(1) + " Mo";
+    return Math.round(octets / 1024) + " Ko";
+  }
+
+  function messageErreur(e) {
+    return (e && (e.message || e.errorMessage)) || String(e);
+  }
+
+  // ---------- Suivi pendant l'enregistrement ----------
+  function demarrerSuivi() {
+    pollId = setInterval(async () => {
+      try {
+        const s = await SystemAudio.status();
+        if (!s.recording) return;
+        elTimer.textContent = formatDuree(s.durationMs);
+        elNiveau.style.width = Math.min(100, s.level * 130) + "%";
+      } catch (_) {}
+    }, 120);
+  }
+
+  function arreterSuivi() {
+    clearInterval(pollId);
+    pollId = null;
+    elNiveau.style.width = "0%";
+  }
+
+  // ---------- Actions ----------
+  async function demarrer() {
+    try {
+      const support = await SystemAudio.isSupported();
+      if (!support.supported) {
+        statut("Android 10 minimum requis (version actuelle : SDK " + support.sdk + ").", "err");
+        return;
+      }
+      statut("Autorisation de capture…");
+      await SystemAudio.start();
+      btnStart.hidden = true;
+      btnStop.hidden = false;
+      statut("Enregistrement en cours… lance ta vidéo.", "ok");
+      demarrerSuivi();
+    } catch (e) {
+      statut(messageErreur(e), "err");
+    }
+  }
+
+  async function arreter() {
+    btnStop.disabled = true;
+    statut("Finalisation du fichier…");
+    try {
+      const r = await SystemAudio.stop();
+      arreterSuivi();
+      elTimer.textContent = "00:00";
+      btnStop.hidden = true;
+      btnStart.hidden = false;
+      if (r.size > 0) {
+        ajouterResultat(r);
+        statut("Enregistrement sauvegardé dans Musique/APKor.", "ok");
+      } else {
+        statut("Fichier vide : aucun son capturé. Vérifie que la vidéo jouait bien.", "err");
+      }
+    } catch (e) {
+      statut(messageErreur(e), "err");
+      btnStop.hidden = true;
+      btnStart.hidden = false;
+    } finally {
+      btnStop.disabled = false;
+    }
+  }
+
+  function ajouterResultat(r) {
+    compteur++;
+    const carte = document.createElement("div");
+    carte.className = "card result";
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.innerHTML = `<span>#${compteur} · WAV</span><span>${formatDuree(r.durationMs)} · ${formatTaille(r.size)}</span>`;
+
+    const nom = document.createElement("div");
+    nom.className = "name";
+    nom.textContent = r.name;
+
+    carte.append(meta, nom);
+
+    // Lecture directe si le WebView peut accéder au fichier
+    if (r.path && cap.convertFileSrc) {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = cap.convertFileSrc("file://" + r.path);
+      audio.onerror = () => audio.remove();
+      carte.append(audio);
+    }
+
+    elResultats.prepend(carte);
+  }
+
+  // ---------- Événements ----------
+  btnStart.addEventListener("click", demarrer);
+  btnStop.addEventListener("click", arreter);
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+window.addEventListener('load',()=>{
+navigator.serviceWorker.register('./sw.js').catch(err=>console.error(err));
+});
+}
+</script>
+</body>
+</html>
